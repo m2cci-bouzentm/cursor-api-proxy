@@ -4,7 +4,6 @@ import type { BridgeConfig } from "../config.js";
 import type { CursorCliModel } from "../cursor-cli.js";
 import { listCursorCliModels } from "../cursor-cli.js";
 import { json } from "../http.js";
-import { getAnthropicModelAliases } from "../model-map.js";
 
 const MODEL_CACHE_TTL_MS = 5 * 60_000;
 
@@ -59,24 +58,22 @@ export async function handleModels(
   opts: HandleModelsOpts,
 ): Promise<void> {
   const { config, modelCacheRef } = opts;
-  const models = await getCachedCursorModels(config, modelCacheRef);
+  const models = (await getCachedCursorModels(config, modelCacheRef))
+    .filter((model) => !/claude|codex|gpt|^(auto|default)$/i.test(model.id))
+    .sort(
+      (a, b) =>
+        Number(!a.id.toLowerCase().includes("grok")) -
+          Number(!b.id.toLowerCase().includes("grok")) ||
+        a.id.localeCompare(b.id),
+    );
   const cursorModels = models.map((m) => ({
     id: m.id,
     object: "model" as const,
     owned_by: "cursor" as const,
     name: m.name,
   }));
-  const anthropicAliases = getAnthropicModelAliases(
-    models.map((m) => m.id),
-  ).map((a) => ({
-    id: a.id,
-    object: "model" as const,
-    owned_by: "cursor" as const,
-    name: a.name,
-  }));
-
   json(res, 200, {
     object: "list",
-    data: [...cursorModels, ...anthropicAliases],
+    data: cursorModels,
   });
 }

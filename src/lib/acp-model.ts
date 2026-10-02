@@ -155,6 +155,9 @@ export function planAcpModelSelection(
 ): AcpModelPlan {
   const trimmed = requested.trim();
   if (!trimmed) return { action: "skip" };
+  if (/claude|codex|gpt/i.test(trimmed) || /^(?:cursor-)?(?:auto|default)$/i.test(trimmed)) {
+    return { action: "missing" };
+  }
   if (!availableModels?.length) {
     return isAutoRequest(trimmed)
       ? { action: "skip" }

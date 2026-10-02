@@ -125,8 +125,22 @@ describe("resolveAcpModelConfigValue", () => {
       modelId: "composer-2.5",
     });
     expect(planAcpModelSelection("auto", catalog)).toEqual({
+      action: "missing",
+    });
+  });
+
+  it("rejects model families excluded by the Hermes Cursor provider policy", () => {
+    const catalog = [
+      { modelId: "claude-opus-5", name: "Claude Opus 5" },
+      { modelId: "gpt-5.6-sol", name: "GPT-5.6 Sol" },
+      { modelId: "grok-4.7", name: "Grok 4.7" },
+    ];
+    expect(planAcpModelSelection("claude-opus-5", catalog)).toEqual({ action: "missing" });
+    expect(planAcpModelSelection("gpt-5.6-sol", catalog)).toEqual({ action: "missing" });
+    expect(planAcpModelSelection("codex", catalog)).toEqual({ action: "missing" });
+    expect(planAcpModelSelection("grok-4.7-high", catalog)).toMatchObject({
       action: "set",
-      modelId: "default",
+      modelId: "grok-4.7",
     });
   });
 
